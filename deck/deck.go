@@ -20,7 +20,7 @@ func (deck *Deck) Serialize(filename string) {
 		panic(err)
 	}
 
-	f, err := os.Create(filename)
+	f, err := os.Create("./decks/" + filename)
 	if err != nil {
 		panic(err)
 	}

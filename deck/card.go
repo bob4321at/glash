@@ -148,8 +148,14 @@ func CardUi(name string) *fyne.Container {
 		),
 		widget.NewButton("Save Deck", func() {
 			Selected_Deck.Serialize(Selected_Deck.Name + ".fcard")
+			Cards_To_Render.Refresh()
 		}),
 		BottomUi,
+		widget.NewButton("Play", func() {
+			Window_Ref.SetContent(
+				PlayUi(),
+			)
+		}),
 	)
 
 	Right_Side_Ui := container.NewVBox(

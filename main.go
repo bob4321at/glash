@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"image/color"
 	"main/deck"
 	"os"
 
@@ -13,9 +14,32 @@ import (
 
 var window fyne.Window
 
+type LargeFont struct{}
+
+func (m LargeFont) Font(style fyne.TextStyle) fyne.Resource {
+	return theme.DefaultTheme().Font(style)
+}
+
+func (m LargeFont) Size(name fyne.ThemeSizeName) float32 {
+	switch name {
+	case theme.SizeNameText:
+		return 24
+	default:
+		return theme.DefaultTheme().Size(name)
+	}
+}
+
+func (m LargeFont) Color(n fyne.ThemeColorName, v fyne.ThemeVariant) color.Color {
+	return theme.DefaultTheme().Color(n, v)
+}
+
+func (m LargeFont) Icon(n fyne.ThemeIconName) fyne.Resource {
+	return theme.DefaultTheme().Icon(n)
+}
+
 func main() {
 	myApp := app.New()
-	myApp.Settings().SetTheme(theme.DarkTheme())
+	myApp.Settings().SetTheme(LargeFont{})
 	window = myApp.NewWindow("learn words")
 	window.Resize(fyne.NewSize(400, 600))
 
