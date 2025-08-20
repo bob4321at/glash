@@ -2,6 +2,7 @@ package deck
 
 import (
 	"fmt"
+	"main/utils"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -30,6 +31,7 @@ type CardWidget struct {
 	WordUi     *widget.Entry
 	AnswerUi   *widget.Entry
 	SaveButton *widget.Button
+	RemoveCard *widget.Button
 
 	Word   string
 	Answer string
@@ -72,6 +74,15 @@ func NewMyListItemWidget(Word, Answer string) *CardWidget {
 				}
 			}
 		}),
+		RemoveCard: widget.NewButton("Remove", func() {
+			for i := range Selected_Deck.Cards {
+				card := &Selected_Deck.Cards[i]
+				if card.Answer == Answer && card.Word == Word {
+					utils.RemoveArrayElement(i, &Selected_Deck.Cards)
+					return
+				}
+			}
+		}),
 	}
 
 	Temp_Word_Ui_Ref = &item.WordUi.Text
@@ -88,7 +99,7 @@ func NewMyListItemWidget(Word, Answer string) *CardWidget {
 }
 
 func (item *CardWidget) CreateRenderer() fyne.WidgetRenderer {
-	c := container.NewVBox(item.WordUi, item.AnswerUi, item.SaveButton)
+	c := container.NewVBox(item.WordUi, item.AnswerUi, item.SaveButton, item.RemoveCard)
 	return widget.NewSimpleRenderer(c)
 }
 
