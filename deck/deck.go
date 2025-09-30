@@ -2,6 +2,7 @@ package deck
 
 import (
 	"encoding/json"
+	"main/utils"
 	"os"
 
 	"fyne.io/fyne/v2"
@@ -15,12 +16,17 @@ type Deck struct {
 }
 
 func (deck *Deck) Serialize(filename string) {
+	home_dir, err := os.UserHomeDir()
+	if err != nil {
+		panic(err)
+	}
+
 	bytes, err := json.Marshal(deck)
 	if err != nil {
 		panic(err)
 	}
 
-	f, err := os.Create("./decks/" + filename)
+	f, err := os.Create(home_dir + "/Documents/decks/" + filename)
 	if err != nil {
 		panic(err)
 	}
@@ -75,6 +81,7 @@ func DeckUi() *fyne.Container {
 			New_Deck_Name,
 			widget.NewButton("Make Deck", func() {
 				Decks = append(Decks, NewDeck(New_Deck_Name.Text))
+				Decks[len(Decks)-1].Serialize(New_Deck_Name.Text + ".fcard")
 				Decks_To_Render_Container.Refresh()
 			}),
 		),
@@ -82,6 +89,26 @@ func DeckUi() *fyne.Container {
 			Window_Ref.SetContent(
 				CardUi(Selected_Deck.Name),
 			)
+		}),
+		widget.NewLabel(""),
+		widget.NewButton("remove", func() {
+			if Selected_Deck != nil {
+				home_dir, err := os.UserHomeDir()
+				if err != nil {
+					panic(err)
+				}
+
+				os.Remove(home_dir + "/Documents/decks/" + Selected_Deck.Name + ".fcard")
+
+				for i := range Decks {
+					deck := &Decks[i]
+					if deck == Selected_Deck {
+						utils.RemoveArrayElement(i, &Decks)
+						Decks_To_Render_Container.Refresh()
+						return
+					}
+				}
+			}
 		}),
 	)
 

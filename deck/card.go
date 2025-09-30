@@ -1,7 +1,6 @@
 package deck
 
 import (
-	"fmt"
 	"main/utils"
 
 	"fyne.io/fyne/v2"
@@ -13,13 +12,15 @@ import (
 type Card struct {
 	Word   string
 	Answer string
+	Back   string
 	ID     int
 }
 
-func NewCard(Word, Answer string, ID int) Card {
+func NewCard(Word, Answer string, Back string, ID int) Card {
 	card := Card{
 		Word:   Word,
 		Answer: Answer,
+		Back:   Back,
 		ID:     ID,
 	}
 
@@ -30,11 +31,13 @@ type CardWidget struct {
 	widget.BaseWidget
 	WordUi     *widget.Entry
 	AnswerUi   *widget.Entry
+	BackUi     *widget.Entry
 	SaveButton *widget.Button
 	RemoveCard *widget.Button
 
 	Word   string
 	Answer string
+	Back   string
 
 	OnTapped func()
 }
@@ -48,19 +51,21 @@ type CardWidgetRenderer struct {
 	card    *CardWidget
 }
 
-func NewMyListItemWidget(Word, Answer string) *CardWidget {
+func NewMyListItemWidget(Word, Answer, Back string) *CardWidget {
 	var Temp_Word_Ui_Ref *string
 	var Temp_Answer_Ui_Ref *string
+	var Temp_Back_Ui_Ref *string
 	var Before_Temp_Word_Ui_Ref *string
 	var Before_Temp_Answer_Ui_Ref *string
+	var Before_Temp_Back_Ui_Ref *string
 
 	item := &CardWidget{
 		WordUi:   widget.NewEntry(),
 		AnswerUi: widget.NewEntry(),
+		BackUi:   widget.NewEntry(),
 		SaveButton: widget.NewButton("Save", func() {
 			for i := range Selected_Deck.Cards {
 				card := &Selected_Deck.Cards[i]
-				fmt.Println(Current_Card_ID)
 				if card.ID == Current_Card_ID {
 					if *Temp_Word_Ui_Ref == "" {
 						Temp_Word_Ui_Ref = Before_Temp_Word_Ui_Ref
@@ -68,9 +73,13 @@ func NewMyListItemWidget(Word, Answer string) *CardWidget {
 					if *Temp_Answer_Ui_Ref == "" {
 						Temp_Answer_Ui_Ref = Before_Temp_Answer_Ui_Ref
 					}
+					if *Temp_Back_Ui_Ref == "" {
+						Temp_Back_Ui_Ref = Before_Temp_Back_Ui_Ref
+					}
 
 					card.Word = *Temp_Word_Ui_Ref
 					card.Answer = *Temp_Answer_Ui_Ref
+					card.Back = *Temp_Back_Ui_Ref
 				}
 			}
 		}),
@@ -82,16 +91,23 @@ func NewMyListItemWidget(Word, Answer string) *CardWidget {
 					return
 				}
 			}
+			for i := range Selected_Deck.Cards {
+				card := &Selected_Deck.Cards[i]
+				card.ID = i
+			}
 		}),
 	}
 
 	Temp_Word_Ui_Ref = &item.WordUi.Text
 	Temp_Answer_Ui_Ref = &item.AnswerUi.Text
+	Temp_Back_Ui_Ref = &item.BackUi.Text
 	Before_Temp_Word_Ui_Ref = &item.WordUi.PlaceHolder
 	Before_Temp_Answer_Ui_Ref = &item.AnswerUi.PlaceHolder
+	Before_Temp_Back_Ui_Ref = &item.BackUi.PlaceHolder
 
 	item.WordUi.PlaceHolder = Word
 	item.AnswerUi.PlaceHolder = Answer
+	item.BackUi.PlaceHolder = Back
 
 	item.ExtendBaseWidget(item)
 
@@ -99,7 +115,7 @@ func NewMyListItemWidget(Word, Answer string) *CardWidget {
 }
 
 func (item *CardWidget) CreateRenderer() fyne.WidgetRenderer {
-	c := container.NewVBox(item.WordUi, item.AnswerUi, item.SaveButton, item.RemoveCard)
+	c := container.NewVBox(item.WordUi, item.BackUi, item.AnswerUi, item.SaveButton, item.RemoveCard)
 	return widget.NewSimpleRenderer(c)
 }
 
@@ -122,7 +138,7 @@ func CardUi(name string) *fyne.Container {
 		Selected_Card = &Selected_Deck.Cards[id]
 		Current_Card_ID = Selected_Card.ID
 		Current_Card_Widget.RemoveAll()
-		Current_Card_Widget.Add(NewMyListItemWidget(Selected_Card.Word, Selected_Card.Answer))
+		Current_Card_Widget.Add(NewMyListItemWidget(Selected_Card.Word, Selected_Card.Answer, Selected_Card.Back))
 		Current_Card_Widget.Refresh()
 	}
 	Cards_To_Render_Container := container.NewScroll(
@@ -132,13 +148,15 @@ func CardUi(name string) *fyne.Container {
 
 	New_Card_Name := widget.NewEntry()
 	New_Card_Answer := widget.NewEntry()
+	New_Card_Back := widget.NewEntry()
 
 	BottomUi := container.NewVBox(
 		New_Card_Name,
 		New_Card_Answer,
+		New_Card_Back,
 		widget.NewButton("Add Card", func() {
 			if New_Card_Name != nil && New_Card_Answer != nil {
-				Selected_Deck.Cards = append(Selected_Deck.Cards, NewCard(New_Card_Name.Text, New_Card_Answer.Text, len(Selected_Deck.Cards)))
+				Selected_Deck.Cards = append(Selected_Deck.Cards, NewCard(New_Card_Name.Text, New_Card_Answer.Text, New_Card_Back.Text, len(Selected_Deck.Cards)))
 				New_Card_Name.Text = ""
 				New_Card_Answer.Text = ""
 				New_Card_Name.Refresh()
@@ -158,13 +176,33 @@ func CardUi(name string) *fyne.Container {
 			Cards_To_Render_Container,
 		),
 		widget.NewButton("Save Deck", func() {
+			for i := range Selected_Deck.Cards {
+				card := &Selected_Deck.Cards[i]
+				card.ID = i
+			}
 			Selected_Deck.Serialize(Selected_Deck.Name + ".fcard")
 			Cards_To_Render.Refresh()
 		}),
 		BottomUi,
 		widget.NewButton("Play", func() {
+			Right_Answers = 0
+			Total_Answers = 0
+
+			Priorities = [3][]*Card{}
+
+			for i := range Selected_Deck.Cards {
+				Priorities[0] = append(Priorities[0], &Selected_Deck.Cards[i])
+			}
+
 			Window_Ref.SetContent(
 				PlayUi(),
+			)
+		}),
+		widget.NewButton("Hidden Mode", func() {
+			Right_Answers = 0
+			Total_Answers = 0
+			Window_Ref.SetContent(
+				PlayHiddenUi(),
 			)
 		}),
 	)

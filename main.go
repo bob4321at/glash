@@ -30,7 +30,7 @@ func (m LargeFont) Size(name fyne.ThemeSizeName) float32 {
 }
 
 func (m LargeFont) Color(n fyne.ThemeColorName, v fyne.ThemeVariant) color.Color {
-	return theme.DefaultTheme().Color(n, v)
+	return theme.LightTheme().Color(n, v)
 }
 
 func (m LargeFont) Icon(n fyne.ThemeIconName) fyne.Resource {
@@ -43,13 +43,25 @@ func main() {
 	window = myApp.NewWindow("learn words")
 	window.Resize(fyne.NewSize(400, 600))
 
-	Decks_Dir, err := os.ReadDir("./decks")
+	home_dir, err := os.UserHomeDir()
+	if err != nil {
+		panic(err)
+	}
+
+	Decks_Dir, err := os.ReadDir(home_dir + "/Documents/decks")
+	if err != nil {
+		if mk_err := os.Mkdir(home_dir+"/Documents/decks", 0755); mk_err != nil {
+			panic(home_dir)
+		}
+	}
+
+	Decks_Dir, err = os.ReadDir(home_dir + "/Documents/decks")
 	if err != nil {
 		panic(err)
 	}
 
 	for _, file := range Decks_Dir {
-		bytes, err := os.ReadFile("./decks/" + file.Name())
+		bytes, err := os.ReadFile(home_dir + "/Documents/decks/" + file.Name())
 		if err != nil {
 			panic(err)
 		}

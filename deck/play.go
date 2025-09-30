@@ -3,7 +3,9 @@ package deck
 import (
 	"fmt"
 	"image/color"
+	"main/utils"
 	"math/rand"
+	"time"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -22,26 +24,72 @@ func GetAllAnswers(deck Deck) []string {
 }
 
 func AnswerButton(Answer string, card_index int) {
+	Total_Answers += 1
 	if Selected_Deck.Cards[card_index].Answer == Answer {
+		Right_Answers += 1
+
+		var selected_card_ptr *Card
+		var selected_card_difficulty int
+		var selected_card_index int
+
+		for difficulty := range Priorities {
+			for index := range Priorities[difficulty] {
+				card := Priorities[difficulty][index]
+				if Priorities[difficulty][index].ID == card_index {
+					selected_card_ptr = card
+					selected_card_difficulty = difficulty
+					selected_card_index = index
+				}
+			}
+		}
+
+		if selected_card_difficulty < 2 {
+			utils.RemoveArrayElement(selected_card_index, &Priorities[selected_card_difficulty])
+			Priorities[selected_card_difficulty+1] = append(Priorities[selected_card_difficulty+1], selected_card_ptr)
+		}
+
 		Window_Ref.SetContent(
-			CorrectUi(),
+			CorrectUi(Selected_Deck.Cards[card_index].Back),
 		)
 	} else {
 		Window_Ref.SetContent(
-			IncorrectUi(),
+			IncorrectUi(Selected_Deck.Cards[card_index].Back),
 		)
 	}
 }
 
+var Priorities = [3][]*Card{}
+
 func PlayUi() *fyne.Container {
 	answers := GetAllAnswers(*Selected_Deck)
 
-	last_index := int(rand.Float64() * float64(len(Selected_Deck.Cards)))
-	QuestionWordLabel := canvas.NewText(Selected_Deck.Cards[last_index].Word, color.Black)
+	fmt.Println(Priorities)
+
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+
+	var chosen_card *Card
+
+	for chosen_card == nil {
+		difficulty := r.Float64()
+
+		if difficulty < 0.55 {
+			if len(Priorities[0]) != 0 {
+				chosen_card = Priorities[0][rand.Intn(len(Priorities[0]))]
+			}
+		} else if difficulty > 0.8 {
+			if len(Priorities[2]) != 0 {
+				chosen_card = Priorities[2][rand.Intn(len(Priorities[2]))]
+			}
+		} else {
+			if len(Priorities[1]) != 0 {
+				chosen_card = Priorities[1][rand.Intn(len(Priorities[1]))]
+			}
+		}
+	}
+
+	QuestionWordLabel := canvas.NewText(chosen_card.Word, color.Black)
 	QuestionWordLabel.TextSize = 100
 	QuestionWordLabel.Alignment = fyne.TextAlignCenter
-
-	fmt.Print(last_index)
 
 	QuestionUi := container.NewGridWithColumns(1,
 		QuestionWordLabel,
@@ -50,15 +98,15 @@ func PlayUi() *fyne.Container {
 	Answer := [4]string{}
 
 	for i := range 4 {
-		Answer[i] = answers[int(rand.Float64()*float64(len(answers)))]
+		Answer[i] = answers[rand.Intn(len(answers))]
 	}
 
-	Answer[int(rand.Float64()*float64(len(Answer)))] = Selected_Deck.Cards[last_index].Answer
+	Answer[r.Intn(len(Answer))] = chosen_card.Answer
 
 	PlayUi := container.NewBorder(
-		container.NewVBox(widget.NewButton("exit", func() {
+		container.NewVBox(widget.NewButton("Done", func() {
 			Window_Ref.SetContent(
-				CardUi(Selected_Deck.Name),
+				EndCardUi(),
 			)
 		})),
 		nil,
@@ -70,18 +118,18 @@ func PlayUi() *fyne.Container {
 			container.NewGridWithColumns(2,
 				container.NewGridWithRows(2,
 					widget.NewButton(Answer[0], func() {
-						AnswerButton(Answer[0], last_index)
+						AnswerButton(Answer[0], chosen_card.ID)
 					}),
 					widget.NewButton(Answer[1], func() {
-						AnswerButton(Answer[1], last_index)
+						AnswerButton(Answer[1], chosen_card.ID)
 					}),
 				),
 				container.NewGridWithRows(2,
 					widget.NewButton(Answer[2], func() {
-						AnswerButton(Answer[2], last_index)
+						AnswerButton(Answer[2], chosen_card.ID)
 					}),
 					widget.NewButton(Answer[3], func() {
-						AnswerButton(Answer[3], last_index)
+						AnswerButton(Answer[3], chosen_card.ID)
 					}),
 				),
 			),

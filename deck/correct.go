@@ -9,18 +9,22 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-func CorrectUi() *fyne.Container {
+func CorrectUi(Back string) *fyne.Container {
 	CorrectText := canvas.NewText("Correct", color.Black)
 	CorrectText.Alignment = fyne.TextAlignCenter
-	CorrectText.TextSize = 64
+	CorrectText.TextSize = 128
+	Back_Ui := canvas.NewText(Back, color.Black)
+	Back_Ui.Alignment = fyne.TextAlignCenter
+	Back_Ui.TextSize = 96
 
 	CorrectUi := container.NewGridWithColumns(1,
-		CorrectText,
 		widget.NewButton("Next", func() {
 			Window_Ref.SetContent(
 				PlayUi(),
 			)
 		}),
+		CorrectText,
+		Back_Ui,
 	)
 
 	return CorrectUi
